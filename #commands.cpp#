@@ -1,0 +1,174 @@
+// $Id: commands.cpp,v 1.11 2014-06-11 13:49:31-07 - - $
+
+
+#include "commands.h"
+#include "debug.h"
+
+commands::commands(): map ({
+   {"cat"   , fn_cat   },
+   {"cd"    , fn_cd    },
+   {"echo"  , fn_echo  },
+   {"exit"  , fn_exit  },
+   {"ls"    , fn_ls    },
+   {"lsr"   , fn_lsr   },
+   {"make"  , fn_make  },
+   {"mkdir" , fn_mkdir },
+   {"prompt", fn_prompt},
+   {"pwd"   , fn_pwd   },
+   {"rm"    , fn_rm    },
+}){}
+
+command_fn commands::at (const string& cmd) {
+   // Note: value_type is pair<const key_type, mapped_type>
+   // So: iterator->first is key_type (string)
+   // So: iterator->second is mapped_type (command_fn)
+   command_map::const_iterator result = map.find (cmd);
+   if (result == map.end()) {
+      throw yshell_exn (cmd + ": no such function");
+   }
+   return result->second;
+}
+
+
+void fn_cat (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+}
+
+void fn_cd (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+}
+
+void fn_echo (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+  
+    
+   for(auto i = begin(words) + 1; i != end(words) ; ++i){   
+      cout << *i << ' ';
+     
+   } 
+  cout << endl;
+   DEBUGF ('c', words);
+}
+
+
+void fn_exit (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+
+   if(words.size() > 2){ 
+       exit_status::set(127);
+       throw ysh_exit_exn();
+   } 
+
+   for(size_t i = 1; i< words.size(); ++i )  { 
+    
+     try{
+     size_t endpos; 
+     int num = stoi(words[i],&endpos);
+     
+
+     if(endpos == words[i].size()){ 
+       exit_status::set(num);
+         }else{
+        exit_status::set(127);
+       }
+     }catch (invalid_argument &error){ 
+         exit_status::set(127); 
+     }catch (out_of_range &error) {
+         exit_status::set(127);
+      }  
+   } 
+
+   throw ysh_exit_exn();
+}
+
+void fn_ls (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+    fn_pwd(state, words);
+    inode_ptr cwd = state.get_cwd();
+    cwd->get_contents();
+    cwd->ls(cwd);
+   
+
+}
+
+void fn_lsr (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+}
+
+
+void fn_make (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+   inode_ptr ptr; 
+   //wordvec w(words.begin()+1,words.end());
+   ptr = state.get_cwd();
+   // file_base_ptr fb = ptr->get_contents();
+   //if(fb == nullptr) cout << "yes" << endl;   
+   //plain_file_ptr pf = plain_file_ptr_of(fb); 
+
+   //pf->writefile(w);
+    
+   file_base_ptr fbdir = ptr->get_contents();
+   directory_ptr dptr = directory_ptr_of(fbdir); 
+   string filename = words.at(1);
+   inode& newdir = dptr->mkfile(filename); 
+}
+
+void fn_mkdir (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+}
+
+
+
+// we are taking in a const reference to a vector so we can't modify it 
+// we can only access things
+
+void fn_prompt (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+   string w; 
+   for(auto i = begin(words) + 1; i != end(words) ; ++i){   
+      w.append(*i); 
+      w.append(" ");
+   } 
+state.change_prompt(w); 
+}
+
+void fn_pwd (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+ 
+   int inode_nr= 0;
+   inode_ptr ptr;
+   ptr = state.get_cwd();
+   inode_nr = ptr->get_inode_nr();
+     if(inode_nr == 1){ 
+    cout << "/" << endl;
+    }else{ 
+    cout << "pathname" << endl; 
+    }
+
+}
+
+void fn_rm (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+}
+
+void fn_rmr (inode_state& state, const wordvec& words){
+   DEBUGF ('c', state);
+   DEBUGF ('c', words);
+}
+
+int exit_status_message() {
+   int exit_status = exit_status::get();
+   cout << execname() << ": exit(" << exit_status << ")" << endl;
+   return exit_status;
+}
+

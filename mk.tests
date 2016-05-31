@@ -1,0 +1,23 @@
+#!/bin/sh
+# $Id: mk.build,v 1.1 2013-01-02 19:11:43-08 - - $
+# Checksource and do the build.
+PATH=$PATH:/afs/cats.ucsc.edu/courses/cmps012b-wm/bin/
+export PATH
+partnercheck 2>&1 | tee partnercheck.log
+checksource Makefile README* *.h *.cc *.cpp >checksource.log 2>&1
+gmake >gmake.log 2>&1
+[rokho@be-linux16 .score]$ cat mk.tests
+#!/bin/bash
+# $Id: mk.tests,v 1.2 2013-06-18 17:22:47-07 - - $
+export PATH=$PATH:/afs/cats.ucsc.edu/courses/cmps012b-wm/bin
+ulimit -f 32
+ulimit -t 120
+
+PROG=./yshell
+
+for test in test*.ysh
+do
+   $PROG <$test 1>$test.out 2>$test.err
+   echo status = $? >$test.status
+done
+

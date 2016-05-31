@@ -1,0 +1,7 @@
+partnercheck: ./PARTNER: format OK:
+user    = deurruti
+uid     = 38194
+gecos   = Daniel Enrique Urrutia
+home    = /afs/cats.ucsc.edu/users/p/deurruti
+shell   = /bin/csh
+

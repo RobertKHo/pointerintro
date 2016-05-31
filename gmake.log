@@ -1,0 +1,1 @@
+checksource commands.h debug.h inode.h util.h commands.cpp debug.cpp inode.cpp util.cpp main.cpp Makefile README PARTNER

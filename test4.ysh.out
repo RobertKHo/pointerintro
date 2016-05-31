@@ -1,0 +1,7 @@
+./yshell build Jan 19 2015 13:42:04
+%  mkdir foo
+%  mkdir foo/bar
+%  mkdir foo/bar/baz
+%  make foo/bar/baz/file with this
+%  mkdir this/mkdir/should/error/out
+%  make foo/bar

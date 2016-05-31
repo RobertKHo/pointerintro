@@ -1,0 +1,181 @@
+\// $Id: inode.cpp,v 1.12 2014-07-03 13:29:57-07 - - $
+
+#include <iostream>
+#include <stdexcept>
+
+using namespace std;
+
+#include "debug.h"
+#include "inode.h"
+
+//returns an the next inode nr being 1
+int inode::next_inode_nr {1};
+
+//a parametrized constructor that takes in a file type
+//sets first inode nr and switches the file type 
+inode::inode(inode_t init_type):
+   inode_nr (next_inode_nr++), type (init_type)
+{
+   switch (type) {
+      case PLAIN_INODE:
+           //sets a file_base_ptr get a make_shared ptr of plain file
+           contents = make_shared<plain_file>();
+           break;
+      case DIR_INODE:
+           contents = make_shared<directory>();
+           break;
+   }
+   DEBUGF ('i', "inode " << inode_nr << ", type = " << type);
+}
+
+int inode::get_inode_nr() const {
+   DEBUGF ('i', "inode = " << inode_nr);
+   return inode_nr;
+}
+
+map<string,inode_ptr>& directory::get_map(){
+
+return this->dirents;
+
+} 
+
+//ptr.reset(&start) causes seg fault
+void inode::mkroot (inode& start){
+  inode_ptr ptr;
+  ptr.reset(&start); 
+  //file_base_ptr fb = ptr->contents;
+  //directory_ptr dir = directory_ptr_of(fb);
+  //map<string,inode_ptr>& map = dir->get_map();   
+  //map.insert(pair<string, inode_ptr>(".",ptr));
+  //map.insert(pair<string, inode_ptr>("..",ptr));
+}
+
+
+plain_file_ptr plain_file_ptr_of (file_base_ptr ptr) { 
+   plain_file_ptr pfptr = dynamic_pointer_cast<plain_file> (ptr);
+   if (pfptr == nullptr) throw invalid_argument ("plain_file_ptr_of");
+   return pfptr;
+}
+
+directory_ptr directory_ptr_of (file_base_ptr ptr) {
+   directory_ptr dirptr = dynamic_pointer_cast<directory> (ptr);
+   if (dirptr == nullptr) throw invalid_argument ("directory_ptr_of");
+   return dirptr;
+}
+
+
+//fix
+size_t plain_file::size() const {
+   size_t size {0};
+   DEBUGF ('i', "size = " << size);
+   return size;
+}
+
+inode_ptr inode_state::get_cwd(){
+return this->cwd;
+
+}
+
+//fix
+const wordvec& plain_file::readfile() const {
+   DEBUGF ('i', data);
+   return data;
+}
+
+//fix
+void plain_file::writefile (const wordvec& words) {
+   DEBUGF ('i', words);
+   string filename= words.at(0);
+   cout << filename << endl;
+   string w; 
+   for(auto i = begin(words) + 1; i != end(words) ; ++i){   
+      w.append(*i); 
+      w.append(" ");
+   } 
+   this->data.push_back(w);
+   cout << data.at(0) << endl;  
+}
+
+inode& directory::mkfile(const string& filename){
+inode pf(PLAIN_INODE);
+inode_ptr pfptr;
+pfptr.reset(&pf); 
+
+file_base_ptr fb = pfptr->get_contents();
+directory_ptr dir = directory_ptr_of(fb);
+map<string,inode_ptr>& map = dir->get_map(); 
+map.insert(pair<string,inode_ptr>(filename,pfptr)); 
+
+return pf; 
+} 
+
+file_base_ptr inode::get_contents(){
+return this->contents;
+} 
+
+//done
+size_t directory::size() const {
+   size_t size {0};
+   size = dirents.size();
+   DEBUGF ('i', "size = " << size);
+   return size;
+}
+
+
+
+//fix
+void directory::remove (const string& filename) {
+   DEBUGF ('i', filename);
+   
+}
+
+//done
+inode_state::inode_state() {
+   DEBUGF ('i', "root = " << root << ", cwd = " << cwd
+          << ", prompt = \"" << prompt << "\""); 
+
+}
+
+//done?
+void inode::ls(inode_ptr curr){
+   map<string,inode_ptr>::iterator it; 
+   file_base_ptr fb = curr->contents;
+   directory_ptr dir= directory_ptr_of(fb) ;
+   map<string,inode_ptr>& map = dir->get_map();
+    
+   for(it = map.begin(); it != map.end(); ++it){
+      inode_ptr i = it->second; 
+      if( curr->type == DIR_INODE){ 
+      cout << "      " << i->get_inode_nr() << "      " << dir->size() << "   " <<(*it).first << endl;
+      }else{
+      cout << "PLAIN_INODE" << endl;
+      }
+   }
+} 
+
+//set root
+void inode_state::change_root(inode& ref){ 
+   root.reset(&ref);
+} 
+
+//set cwd
+void inode_state::change_cwd(inode& ref){ 
+   cwd.reset(&ref);
+ } 
+
+//set prompt
+void inode_state::change_prompt(string& p){ 
+   prompt = p;
+} 
+
+//get prompt
+string inode_state::get_prompt(){
+   return prompt; 
+} 
+
+ostream& operator<< (ostream& out, const inode_state& state) {
+   out << "inode_state: root = " << state.root
+       << ", cwd = " << state.cwd;
+   return out;
+}
+
